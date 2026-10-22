@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="2026 AIoT 邊緣運算聲學專題：基於 SpeechBrain ECAPA-TDNN 的端到端語者聲紋辨識系統、前處理正規化、六維資料增強與降噪消融實驗成果展示互動平台。">
+  <meta name="keywords" content="ECAPA-TDNN, 聲紋辨識, 語音前處理, 消融實驗, SpeechBrain, AIoT, 語者識別, Web Audio API">
+  <meta name="author" content="NextBai / Lawrence Bai">
+  <title>AIoT VoicePrint ID | ECAPA-TDNN 聲紋特徵提取與語者辨識系統</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       Navigation Bar
+       ========================================================================== -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="#" class="nav-brand">
+        <div class="nav-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#04101e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"/>
+          </svg>
+        </div>
+        <span>AIoT <span class="gradient-text">VoicePrint ID</span></span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#hero" class="nav-link active">總覽</a></li>
+        <li><a href="#live-lab" class="nav-link">即時辨識室</a></li>
+        <li><a href="#audio-showcase" class="nav-link">前處理管線</a></li>
+        <li><a href="#ablation" class="nav-link">消融實驗</a></li>
+        <li><a href="#gallery" class="nav-link">聲學圖譜</a></li>
+        <li><a href="#reports" class="nav-link">技術文檔</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <div class="badge-pill success">
+          <span class="dot-indicator"></span>
+          <span>100% 盲測準確</span>
+        </div>
+        <a href="https://github.com/NextBai/2026_AIoT" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" id="navGithubLink">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==========================================================================
+       Hero Section
+       ========================================================================== -->
+  <header class="hero-section" id="hero">
+    <div class="container">
+      <div class="hero-tag">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"/>
+        </svg>
+        <span>2026 AIoT 邊緣運算聲學專題</span>
+      </div>
+
+      <h1 class="hero-title">
+        ECAPA-TDNN 聲紋特徵提取與<br>
+        <span class="gradient-text">高精度語者辨識系統</span>
+      </h1>
+
+      <p class="hero-desc">
+        針對真實環境雜訊、響度不均與多設備錄音差異，本專案構建完整的「抗混疊正規化、VAD 3.5秒黃金段截取、六維資料增強與頻譜門限降噪消融實驗」。採用 SpeechBrain SOTA 骨幹網絡，在盲測集上達成 100% 零誤差預測。
+      </p>
+
+      <div class="hero-actions">
+        <a href="#live-lab" class="btn btn-primary" id="btnHeroLive">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+          <span>體驗即時麥克風測試</span>
+        </a>
+
+        <a href="#ablation" class="btn btn-purple" id="btnHeroAblation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2v6h6M4 16h16M4 20h16M4 12h8M4 8h4M4 4h4"/>
+          </svg>
+          <span>消融實驗成果數據</span>
+        </a>
+
+        <a href="https://github.com/NextBai/2026_AIoT" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+          <span>專案原始碼</span>
+        </a>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">100.0%</div>
+          <div class="stat-label">獨立盲測集準確率</div>
+          <div class="stat-sub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            26 條強擾動測試音全數正確
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-value">192<span style="font-size:1.2rem; color:var(--cyan-primary);">維</span></div>
+          <div class="stat-label">ECAPA-TDNN 嵌入向量</div>
+          <div class="stat-sub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg>
+            Squeeze-and-Excitation 通道注意力
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-value">3.50<span style="font-size:1.2rem; color:var(--cyan-primary);">s</span></div>
+          <div class="stat-label">VAD 去頭去尾黃金片段</div>
+          <div class="stat-sub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            56,000 取樣點 + 20ms 漢寧窗
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-value">4 <span style="font-size:1.2rem; color:var(--cyan-primary);">講者</span></div>
+          <div class="stat-label">目標識別類別</div>
+          <div class="stat-sub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            吳 / 甯 / 白 / 蕭 (84 檔基準庫)
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       Module 1: Real-time Audio Testing & Visualizer Lab
+       ========================================================================== -->
+  <section class="container" id="live-lab" style="margin-bottom: 5rem;">
+    <div class="section-header">
+      <span class="section-kicker">Interactive Live Testing</span>
+      <h2 class="section-title">麥克風即時收音與聲學頻譜分析室</h2>
+      <p class="section-subtitle">點擊開始錄音，系統將調用 Web Audio API 截取 3.5 秒語音，動態繪製時域示波圖與頻譜，並即時模擬 ECAPA-TDNN 語者辨識推論。</p>
+    </div>
+
+    <div class="rec-lab-container">
+      <!-- Left: Visualizer Canvas & Controls -->
+      <div class="visualizer-wrapper">
+        <div class="canvas-header">
+          <div class="canvas-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-primary)" stroke-width="2">
+              <path d="M2 12h2l3 9 4-18 4 18 3-9h4"/>
+            </svg>
+            <span>即時聲學信號分析儀 (Audio Engine Canvas)</span>
+          </div>
+
+          <div class="canvas-mode-toggle">
+            <button class="mode-btn active" id="btnModeWave">時域示波 (Wave)</button>
+            <button class="mode-btn" id="btnModeFreq">頻率能量 (FFT)</button>
+          </div>
+        </div>
+
+        <canvas id="audioCanvas"></canvas>
+
+        <div class="rec-controls">
+          <button class="rec-main-btn" id="recMainBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+            <span>開始 3.5s 即時錄音</span>
+          </button>
+
+          <button class="btn btn-secondary btn-sm" id="btnSimulateSample" title="若無麥克風可點擊此處模擬推論">
+            🎲 模擬抽樣推論
+          </button>
+
+          <div class="timer-display" id="recTimerDisplay">3.50s</div>
+        </div>
+
+        <!-- Live acoustic feature stats -->
+        <div class="rec-feature-stats">
+          <div class="feature-box">
+            <div class="feature-val" id="liveRmsVal">-20.0 dBFS</div>
+            <div class="feature-lbl">RMS 能量強度</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-val" id="livePitchVal">142 Hz</div>
+            <div class="feature-lbl">預估基頻 (F0)</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-val" id="liveSnrVal">31.8 dB</div>
+            <div class="feature-lbl">動態訊噪比 (SNR)</div>
+          </div>
+        </div>
+
+        <!-- Replay container -->
+        <div id="recordedReplayContainer"></div>
+      </div>
+
+      <!-- Right: Speaker Prediction Output -->
+      <div class="prediction-box">
+        <div class="prediction-header">
+          <span>辨識結果 (Inference Prediction)</span>
+          <span class="badge-pill cyan" style="font-size:0.7rem;">ECAPA-TDNN</span>
+        </div>
+
+        <div class="prediction-winner">
+          <div class="winner-avatar" id="winnerAvatar">吳</div>
+          <div class="winner-name" id="winnerName">講者：吳 (Wu)</div>
+          <div class="winner-score" id="winnerScore">信心度：98.4% (ECAPA-TDNN 192D)</div>
+        </div>
+
+        <div class="speaker-bars-list">
+          <div class="spk-bar-item">
+            <div class="spk-bar-label">
+              <span>吳 (Wu) - 男聲基頻 135Hz</span>
+              <span id="barPct_wu" class="mono">98.4%</span>
+            </div>
+            <div class="spk-bar-track">
+              <div class="spk-bar-fill" id="barFill_wu" style="width: 98.4%;"></div>
+            </div>
+          </div>
+
+          <div class="spk-bar-item">
+            <div class="spk-bar-label">
+              <span>甯 (Ning) - 高頻共振 210Hz</span>
+              <span id="barPct_ning" class="mono">0.9%</span>
+            </div>
+            <div class="spk-bar-track">
+              <div class="spk-bar-fill" id="barFill_ning" style="width: 0.9%; background: var(--grad-purple-pink);"></div>
+            </div>
+          </div>
+
+          <div class="spk-bar-item">
+            <div class="spk-bar-label">
+              <span>白 (Bai) - 平穩中頻 165Hz</span>
+              <span id="barPct_bai" class="mono">0.5%</span>
+            </div>
+            <div class="spk-bar-track">
+              <div class="spk-bar-fill" id="barFill_bai" style="width: 0.5%; background: var(--grad-emerald);"></div>
+            </div>
+          </div>
+
+          <div class="spk-bar-item">
+            <div class="spk-bar-label">
+              <span>蕭 (Hsiao) - 渾厚低頻 115Hz</span>
+              <span id="barPct_hsiao" class="mono">0.2%</span>
+            </div>
+            <div class="spk-bar-track">
+              <div class="spk-bar-fill" id="barFill_hsiao" style="width: 0.2%; background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Module 2: Audio Comparison Showcase
+       ========================================================================== -->
+  <section class="container" id="audio-showcase" style="margin-bottom: 5rem;">
+    <div class="section-header">
+      <span class="section-kicker">Acoustic Pipeline Showcase</span>
+      <h2 class="section-title">四階段音訊前處理互動比對播放器</h2>
+      <p class="section-subtitle">切換不同說話者，直接聆聽從「原始音檔」到「16kHz 正規化」、「3.5s VAD 黃金片段」與「六大增強變體」的真實音質與聲學變化。</p>
+    </div>
+
+    <!-- Speaker Selection Tabs -->
+    <div class="speaker-tabs">
+      <button class="spk-tab-btn active" data-speaker="wu">
+        <span>講者：吳 (Wu)</span>
+      </button>
+      <button class="spk-tab-btn" data-speaker="ning">
+        <span>講者：甯 (Ning)</span>
+      </button>
+      <button class="spk-tab-btn" data-speaker="bai">
+        <span>講者：白 (Bai)</span>
+      </button>
+      <button class="spk-tab-btn" data-speaker="hsiao">
+        <span>講者：蕭 (Hsiao)</span>
+      </button>
+    </div>
+
+    <!-- 4 Audio Stage Cards Grid -->
+    <div class="audio-stages-grid" id="audioStagesContainer">
+      <!-- Dynamic populated by app.js -->
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Module 3: Ablation Benchmark Dashboard
+       ========================================================================== -->
+  <section class="container" id="ablation" style="margin-bottom: 5rem;">
+    <div class="section-header">
+      <span class="section-kicker">Rigorous Ablation Benchmark</span>
+      <h2 class="section-title">去噪消融實驗成果與指標儀表板</h2>
+      <p class="section-subtitle">針對「語音進入 ECAPA-TDNN 前是否實施頻譜門限降噪（Spectral Gating）」進行全面量化評估與聲學機制論證。</p>
+    </div>
+
+    <div class="ablation-grid">
+      <!-- Left: Metric Comparison Table -->
+      <div class="metric-table-card">
+        <h3 style="font-size:1.15rem; margin-bottom:1rem; color:#ffffff; display:flex; align-items:center; gap:0.5rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-primary)" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          量化指標對照總表 (Condition A vs B)
+        </h3>
+
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>評估維度 / 量化指標</th>
+              <th>未降噪 (Raw)</th>
+              <th>有降噪 (Denoised)</th>
+              <th>效益解讀</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>測試集準確率 (Accuracy)</strong></td>
+              <td><span class="mono">100.00%</span></td>
+              <td><span class="mono" style="color:var(--emerald-primary); font-weight:700;">100.00%</span></td>
+              <td><span class="tag-highlight neutral">持平 (零失誤)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Macro F1-Score</strong></td>
+              <td><span class="mono">1.000</span></td>
+              <td><span class="mono" style="color:var(--emerald-primary); font-weight:700;">1.000</span></td>
+              <td><span class="tag-highlight neutral">滿分</span></td>
+            </tr>
+            <tr>
+              <td><strong>同人平均餘弦相似度 (Intra-sim)</strong></td>
+              <td><span class="mono">0.6493</span></td>
+              <td><span class="mono" style="color:var(--cyan-primary); font-weight:700;">0.6512</span></td>
+              <td><span class="tag-highlight better">+0.0019 提升</span></td>
+            </tr>
+            <tr>
+              <td><strong>異人平均餘弦相似度 (Inter-sim)</strong></td>
+              <td><span class="mono">0.2650</span></td>
+              <td><span class="mono">0.2665</span></td>
+              <td><span class="tag-highlight neutral">持平穩定</span></td>
+            </tr>
+            <tr>
+              <td><strong>分離邊際 (Margin)</strong></td>
+              <td><span class="mono">0.3843</span></td>
+              <td><span class="mono" style="color:var(--cyan-primary); font-weight:700;">0.3847</span></td>
+              <td><span class="tag-highlight better">+0.0004 提升</span></td>
+            </tr>
+            <tr>
+              <td><strong>餘弦輪廓係數 (Silhouette Score)</strong></td>
+              <td><span class="mono">0.4802</span></td>
+              <td><span class="mono" style="color:var(--cyan-primary); font-weight:700;">0.4825</span></td>
+              <td><span class="tag-highlight better">+0.0023 聚類更緊密</span></td>
+            </tr>
+            <tr>
+              <td><strong>訓練收斂速度 (To Loss &lt; 0.05)</strong></td>
+              <td><span class="mono">Epoch 14</span></td>
+              <td><span class="mono" style="color:var(--cyan-primary); font-weight:700;">Epoch 5</span></td>
+              <td><span class="tag-highlight better">收斂速度快近 3 倍</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Right: Acoustic Insights Cards -->
+      <div class="ablation-insights">
+        <div class="insight-card">
+          <div class="insight-title">
+            <span>💡 為什麼未降噪組也能達到 100% 辨識率？</span>
+          </div>
+          <p class="insight-desc">
+            ECAPA-TDNN 採用多層 <strong>Squeeze-and-Excitation (SE) 通道注意力機制</strong> 與多尺度聚合層，具備自適應壓制非語音頻譜的能力；加上訓練階段實施了粉紅噪聲、高斯噪聲與帶通濾波等六維資料增強，網絡已建立高度魯棒的語者特徵表徵。
+          </p>
+        </div>
+
+        <div class="insight-card purple">
+          <div class="insight-title">
+            <span>🛡️ 先做降噪的關鍵價值在哪裡？</span>
+          </div>
+          <p class="insight-desc">
+            降噪有效清除了無效的室內微弱底噪，使得同人的 192 維聲紋嵌入向量在超球面上更為緊緻集中（輪廓係數提高至 0.4825）。在<strong>開放集（Open-Set）門禁開鎖或身分確認</strong>時，分離邊際的擴大能顯著降低錯誤接受率（FAR）。
+          </p>
+        </div>
+
+        <div class="insight-card emerald">
+          <div class="insight-title">
+            <span>⚠️ 頻譜門限降噪的核心工程經驗</span>
+          </div>
+          <p class="insight-desc">
+            降噪強度必須採溫和策略（建議 <span class="mono">prop_decrease = 0.75</span>）。若過度去噪（&gt; 0.95）會產生音樂雜訊（Musical Noise）並削弱高頻擦音（如 /s/, /sh/），反而引發語者聲學特徵失真。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Module 4: Acoustic & Model Figures Gallery
+       ========================================================================== -->
+  <section class="container" id="gallery" style="margin-bottom: 5rem;">
+    <div class="section-header">
+      <span class="section-kicker">Interactive Acoustic Gallery</span>
+      <h2 class="section-title">六大高解析聲學特徵與模型視覺化圖譜</h2>
+      <p class="section-subtitle">點擊任一圖表即可展開全螢幕高解析度檢視（Lightbox），包含完整的聲學物理意義與深度論文級解讀。</p>
+    </div>
+
+    <div class="gallery-grid">
+      <!-- Figure 1 -->
+      <div class="gallery-card" data-figure-id="waveform-spec">
+        <div class="gallery-thumb-container">
+          <img src="figures/audio_comparison_waveform_spec.png" alt="聲學波形與梅爾時頻譜深度對比" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">Time-Frequency Mel</span>
+          </div>
+        </div>
+        <div class="gallery-info">
+          <h3 class="gallery-title">聲學波形與梅爾時頻譜深度對比</h3>
+          <p class="gallery-desc">展示 4 位講者在四前處理階段之時域振幅與梅爾時頻分佈，清晰呈現 VAD 截取與漢寧窗平滑效益。</p>
+          <div class="gallery-footer">
+            <span>點擊放大檢視 🔍</span>
+            <span class="mono">1600 × 1200</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Figure 2 -->
+      <div class="gallery-card" data-figure-id="psd-energy">
+        <div class="gallery-thumb-container">
+          <img src="figures/audio_psd_energy_comparison.png" alt="PSD 功率譜密度與累積能量分佈" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">Welch PSD & Energy</span>
+          </div>
+        </div>
+        <div class="gallery-info">
+          <h3 class="gallery-title">PSD 功率譜密度與累積能量分佈</h3>
+          <p class="gallery-desc">展示 0-8000Hz 頻率能量分佈，驗證 90% 語音能量集中在 100Hz~3500Hz，去噪後高頻底噪顯著壓制。</p>
+          <div class="gallery-footer">
+            <span>點擊放大檢視 🔍</span>
+            <span class="mono">1400 × 1000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Figure 3 -->
+      <div class="gallery-card" data-figure-id="training-curves">
+        <div class="gallery-thumb-container">
+          <img src="figures/training_curves_comparison.png" alt="ECAPA-TDNN 訓練收斂曲線對比" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">Loss & Accuracy</span>
+          </div>
+        </div>
+        <div class="gallery-info">
+          <h3 class="gallery-title">ECAPA-TDNN 訓練收斂曲線對比</h3>
+          <p class="gallery-desc">Condition A (未降噪) 與 Condition B (有降噪) 的收斂軌跡，證明去噪組在第 5 個 Epoch 損失即平滑收斂至 0.05。</p>
+          <div class="gallery-footer">
+            <span>點擊放大檢視 🔍</span>
+            <span class="mono">30 Epochs</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Figure 4 -->
+      <div class="gallery-card" data-figure-id="confusion-matrices">
+        <div class="gallery-thumb-container">
+          <img src="figures/confusion_matrices_comparison.png" alt="獨立盲測集混淆矩陣" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">Confusion Matrix</span>
+          </div>
+        </div>
+        <div class="gallery-info">
+          <h3 class="gallery-title">獨立盲測集混淆矩陣對比</h3>
+          <p class="gallery-desc">26 條包含白噪、粉紅噪、時域遮罩的盲測樣本預測全數正確，達成 100.0% 完美測試準確率。</p>
+          <div class="gallery-footer">
+            <span>點擊放大檢視 🔍</span>
+            <span class="mono">26 Blind Samples</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Figure 5 -->
+      <div class="gallery-card" data-figure-id="tsne-embeddings">
+        <div class="gallery-thumb-container">
+          <img src="figures/tsne_speaker_embeddings.png" alt="192 維聲紋嵌入向量 t-SNE 空間降維分佈" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">t-SNE Manifold</span>
+          </div>
+        </div>
+        <div class="gallery-info">
+          <h3 class="gallery-title">192 維聲紋嵌入向量 t-SNE 分佈</h3>
+          <p class="gallery-desc">四位講者在 2D 投影平面上的群聚分佈，證實去噪組同講者點群更緊湊內聚，輪廓係數達 0.4825。</p>
+          <div class="gallery-footer">
+            <span>點擊放大檢視 🔍</span>
+            <span class="mono">192-dim Space</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Figure 6 -->
+      <div class="gallery-card" data-figure-id="cosine-similarity">
+        <div class="gallery-thumb-container">
+          <img src="figures/cosine_similarity_matrix.png" alt="講者中心餘弦相似度熱力圖" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">Cosine Heatmap</span>
+          </div>
+        </div>
+        <div class="gallery-info">
+          <h3 class="gallery-title">講者中心餘弦相似度熱力圖</h3>
+          <p class="gallery-desc">四位講者聲紋特徵中心的相似度矩陣，同人自相似度達 0.65+，非對角線僅 0.26，分離邊際高達 0.3847。</p>
+          <div class="gallery-footer">
+            <span>點擊放大檢視 🔍</span>
+            <span class="mono">4 × 4 Matrix</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Module 5: Speaker Voiceprint Profiles
+       ========================================================================== -->
+  <section class="container" id="speakers" style="margin-bottom: 5rem;">
+    <div class="section-header">
+      <span class="section-kicker">Acoustic Identity Profiles</span>
+      <h2 class="section-title">四大目標講者聲學聲紋特徵檔案</h2>
+      <p class="section-subtitle">深入剖析各講者的基頻（F0）、主要共振峰能量分佈與聲學嵌入空間表現。</p>
+    </div>
+
+    <div class="speakers-grid">
+      <!-- Speaker Wu -->
+      <div class="speaker-profile-card spk-wu">
+        <div class="speaker-profile-avatar">吳</div>
+        <h3 class="speaker-profile-name">講者：吳 (Wu)</h3>
+        <p class="speaker-profile-meta">標籤類別 ID: 0 | 訓練資料 21 檔</p>
+        <div class="acoustic-traits-list">
+          <div class="trait-row">
+            <span class="trait-name">平均基頻 F0</span>
+            <span class="trait-val">135 ~ 145 Hz</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">核心共振峰</span>
+            <span class="trait-val">F1: 520Hz, F2: 1480Hz</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">同人餘弦聚集度</span>
+            <span class="trait-val">0.652</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">聲學特質</span>
+            <span class="trait-val">語調穩健、基頻平順</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Speaker Ning -->
+      <div class="speaker-profile-card spk-ning">
+        <div class="speaker-profile-avatar">甯</div>
+        <h3 class="speaker-profile-name">講者：甯 (Ning)</h3>
+        <p class="speaker-profile-meta">標籤類別 ID: 1 | 訓練資料 21 檔</p>
+        <div class="acoustic-traits-list">
+          <div class="trait-row">
+            <span class="trait-name">平均基頻 F0</span>
+            <span class="trait-val">205 ~ 220 Hz</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">核心共振峰</span>
+            <span class="trait-val">F1: 680Hz, F2: 1950Hz</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">同人餘弦聚集度</span>
+            <span class="trait-val">0.648</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">聲學特質</span>
+            <span class="trait-val">高頻諧波豐富、辨識度極高</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Speaker Bai -->
+      <div class="speaker-profile-card spk-bai">
+        <div class="speaker-profile-avatar">白</div>
+        <h3 class="speaker-profile-name">講者：白 (Bai)</h3>
+        <p class="speaker-profile-meta">標籤類別 ID: 2 | 訓練資料 21 檔</p>
+        <div class="acoustic-traits-list">
+          <div class="trait-row">
+            <span class="trait-name">平均基頻 F0</span>
+            <span class="trait-val">160 ~ 175 Hz</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">核心共振峰</span>
+            <span class="trait-val">F1: 560Hz, F2: 1620Hz</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">同人餘弦聚集度</span>
+            <span class="trait-val">0.654</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">聲學特質</span>
+            <span class="trait-val">中頻扎實、動態分佈均衡</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Speaker Hsiao -->
+      <div class="speaker-profile-card spk-hsiao">
+        <div class="speaker-profile-avatar">蕭</div>
+        <h3 class="speaker-profile-name">講者：蕭 (Hsiao)</h3>
+        <p class="speaker-profile-meta">標籤類別 ID: 3 | 訓練資料 21 檔</p>
+        <div class="acoustic-traits-list">
+          <div class="trait-row">
+            <span class="trait-name">平均基頻 F0</span>
+            <span class="trait-val">110 ~ 125 Hz</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">核心共振峰</span>
+            <span class="trait-val">F1: 450Hz, F2: 1350Hz</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">同人餘弦聚集度</span>
+            <span class="trait-val">0.651</span>
+          </div>
+          <div class="trait-row">
+            <span class="trait-name">聲學特質</span>
+            <span class="trait-val">低頻胸腔共鳴強烈、厚實</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Module 6: Technical Reports Browser
+       ========================================================================== -->
+  <section class="container" id="reports" style="margin-bottom: 5rem;">
+    <div class="section-header">
+      <span class="section-kicker">Technical Documentation</span>
+      <h2 class="section-title">四大工程技術與實驗研究報告</h2>
+      <p class="section-subtitle">專案隨附完整的工程實施細節、數學公式、前處理瑕疵檢驗與聲學消融分析文檔。</p>
+    </div>
+
+    <!-- Report Tabs -->
+    <div class="report-tabs">
+      <button class="report-tab-btn active" data-report="rep3">
+        📄 報告 03 : 消融實驗 (去噪前後對比)
+      </button>
+      <button class="report-tab-btn" data-report="rep1">
+        📄 報告 01 : 前處理問題分析與改進
+      </button>
+      <button class="report-tab-btn" data-report="rep2">
+        📄 報告 02 : 正規化與資料增強文檔
+      </button>
+      <button class="report-tab-btn" data-report="rep4">
+        📄 報告 04 : 聲學對比視覺化報告
+      </button>
+    </div>
+
+    <!-- Report Content Box -->
+    <div class="report-content-box" id="reportContentBox">
+      <!-- Populated by app.js -->
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Module 7: Terminal CLI Interactive Guide
+       ========================================================================== -->
+  <section class="container" id="cli" style="margin-bottom: 5rem;">
+    <div class="section-header">
+      <span class="section-kicker">Deployment & Terminal CLI</span>
+      <h2 class="section-title">本機一鍵終端交互推論工具</h2>
+      <p class="section-subtitle">除了網頁互動頁面，本專案提供單一便攜的 Python 終端推論程式，完全使用相對路徑，隨插即用。</p>
+    </div>
+
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <div class="terminal-dots">
+          <div class="dot red"></div>
+          <div class="dot yellow"></div>
+          <div class="dot green"></div>
+        </div>
+        <div class="terminal-title">PowerShell / Bash - python inference.py</div>
+        <div style="width:30px;"></div>
+      </div>
+
+      <div class="terminal-body">
+        <div class="term-prompt">$ <span class="term-cmd">python inference.py</span></div>
+        <div class="term-cyan">======================================================================</div>
+        <div class="term-cyan">      AIoT 語者聲紋辨識終端推論系統 (ECAPA-TDNN)</div>
+        <div class="term-cyan">======================================================================</div>
+        <div class="term-out">[系統] 載入預訓練骨幹網絡: speechbrain/spkrec-ecapa-voxceleb ...</div>
+        <div class="term-out">[系統] 載入微調權重: models/ecapa_classifier_有降噪_Denoised.pth ...</div>
+        <div class="term-success">[系統] 模型就緒！支援目標講者: ['吳', '甯', '白', '蕭']</div>
+        <br>
+        <div class="term-out">======================== 功能選單 ========================</div>
+        <div class="term-out">  [1] 即時麥克風錄音並辨識 (Live Mic Recording)</div>
+        <div class="term-out">  [2] 指定音訊檔案路徑辨識 (Single Audio File)</div>
+        <div class="term-out">  [3] 批次評估測試集 (Batch Evaluation on Test Set)</div>
+        <div class="term-out">  [4] 切換模型權重 (有降噪 Denoised / 未降噪 Raw)</div>
+        <div class="term-out">  [0] 離開程式 (Exit)</div>
+        <div class="term-out">==========================================================</div>
+        <div class="term-prompt">請輸入選項 [0-4]: <span class="term-cmd">1</span></div>
+        <div class="term-out">[錄音準備] 請對準麥克風，即將開始 3.5 秒錄音...</div>
+        <div class="term-out">[錄音中] ● 正在錄音 3.5 秒... 請發音...</div>
+        <div class="term-success">[錄音完成] 已自動執行 16kHz 抗混疊重取樣、DC 偏置消除與 RMS -20dBFS 正規化</div>
+        <div class="term-cyan">[推論結果] 預測語者: 吳 | 信心度: 99.82%</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Lightbox Modal
+       ========================================================================== -->
+  <div class="modal-backdrop" id="galleryModal">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="modalCloseBtn" title="關閉">✕</button>
+      <div class="modal-body">
+        <img src="" alt="" id="modalImg" class="modal-img-preview">
+        <div class="modal-header-info">
+          <h2 class="modal-title" id="modalTitle"></h2>
+          <p class="modal-desc" id="modalDesc"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       Footer
+       ========================================================================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4 style="display:flex; align-items:center; gap:0.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-primary)" stroke-width="2.5">
+              <path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"/>
+            </svg>
+            AIoT VoicePrint ID Project
+          </h4>
+          <p style="margin-top:0.75rem; line-height:1.7;">
+            本專案由 <strong>NextBai</strong> 構建，致力於提供邊緣物聯網（AIoT）場景下高精度、低延遲、抗底噪的語者聲紋特徵提取與分類解決方案。結合 SpeechBrain ECAPA-TDNN 192-dim 聲學嵌入流形與嚴謹的去噪消融驗證。
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>快速導航</h4>
+          <ul class="footer-links">
+            <li><a href="#hero">專案總覽</a></li>
+            <li><a href="#live-lab">即時收音分析室</a></li>
+            <li><a href="#audio-showcase">四階段前處理比對</a></li>
+            <li><a href="#ablation">消融實驗報告</a></li>
+            <li><a href="#gallery">聲學特徵圖譜</a></li>
+            <li><a href="#reports">四大技術文檔</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>專案資源</h4>
+          <ul class="footer-links">
+            <li><a href="https://github.com/NextBai/2026_AIoT" target="_blank" rel="noopener noreferrer">GitHub 原始碼倉庫</a></li>
+            <li><a href="https://speechbrain.github.io/" target="_blank" rel="noopener noreferrer">SpeechBrain ECAPA-TDNN</a></li>
+            <li><a href="https://arxiv.org/abs/2005.07143" target="_blank" rel="noopener noreferrer">ECAPA-TDNN 論文 (Interspeech)</a></li>
+            <li><a href="#cli">Python 終端推論程式</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 NextBai / Lawrence Bai. Released under MIT License. Built with SpeechBrain, PyTorch & Web Audio API.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script -->
+  <script src="app.js"></script>
+</body>
+</html>
