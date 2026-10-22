@@ -24,7 +24,13 @@
 Voice identify/
 │
 ├── README.md                               # 專案總覽與使用說明
-├── inference.py                            # [頂層推論入口] 支援單檔與批次目錄推論
+├── requirements.txt                        # Python 依賴套件清單
+├── inference.py                            # [頂層推論入口] 支援終端選單、麥克風錄音與批次推論
+│
+├── index.html                              # [GitHub Pages 互動展示頁] 瀏覽器即時收音與視覺化平台
+├── assets/                                 # [前端網頁靜態資源庫]
+│   ├── css/styles.css                      # 科技感深色主題設計系統與 Glassmorphism 樣式
+│   └── js/app.js                           # Web Audio API 麥克風分析儀與互動邏輯
 │
 ├── data/                                   # [音訊數據層級]
 │   ├── 01_raw/                             # 原始錄音音檔 (物聯網音檔，48kHz Stereo M4A)
@@ -36,7 +42,7 @@ Voice identify/
 │       └── raw/                            # 未降噪 (84 檔，消融對照)
 │
 ├── models/                                 # [模型權重庫]
-│   ├── ecapa_classifier_有降噪_Denoised.pth# 正式生產模型
+│   ├── ecapa_classifier_有降噪_Denoised.pth# 正式生產模型 (100% 盲測準確率)
 │   └── ecapa_classifier_未降噪_Raw.pth     # 消融對照模型
 │
 ├── figures/                                # [視覺化圖表庫]
@@ -146,6 +152,7 @@ python scripts/plot_audio_comparison.py
 ## 四、 依賴環境安裝
 
 ```bash
-pip install torch torchaudio soundfile av scipy noisereduce speechbrain scikit-learn matplotlib seaborn
+# 透過 requirements.txt 一鍵安裝所有依賴
+pip install -r requirements.txt
 ```
-*註：若使用 NVIDIA GPU，建議依官方指引安裝對應 CUDA 版本的 `torch` 與 `torchaudio`。*
+*註：若使用 NVIDIA GPU，建議依官方指引安裝對應 CUDA 版本的 `torch` 與 `torchaudio`（如 `pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu128`）。*

@@ -84,19 +84,19 @@ Voice identify/
 ### 3. 視覺化實驗圖表
 
 #### (1) 訓練與測試收斂曲線對比（Loss & Accuracy）
-- 檔案：[`training_curves_comparison.png`](file:///c:/Users/Lawrence%20Bai/Desktop/Voice%20identify/training_curves_comparison.png)
+- 檔案：[`training_curves_comparison.png`](../figures/training_curves_comparison.png)
 - 說明：展示未降噪與有降噪兩組在 30 個 Epoch 內的訓練損失（Loss）與準確率（Accuracy）收斂軌跡。有降噪組（紅線）在第 5 個 Epoch 即平滑收斂至接近 0 Loss 與 100% 準確率。
 
 #### (2) 獨立盲測集混淆矩陣熱力圖（Confusion Matrices）
-- 檔案：[`confusion_matrices_comparison.png`](file:///c:/Users/Lawrence%20Bai/Desktop/Voice%20identify/confusion_matrices_comparison.png)
+- 檔案：[`confusion_matrices_comparison.png`](../figures/confusion_matrices_comparison.png)
 - 說明：展示 4 位說話者（吳 7 條、甯 6 條、白 7 條、蕭 6 條，共 26 條包含各類增強擾動的測試音訊）的對角線預測分佈，兩組皆達成 100.0% 完美預測。
 
 #### (3) 192 維聲紋嵌入向量 t-SNE 空間降維分佈圖
-- 檔案：[`tsne_speaker_embeddings.png`](file:///c:/Users/Lawrence%20Bai/Desktop/Voice%20identify/tsne_speaker_embeddings.png)
+- 檔案：[`tsne_speaker_embeddings.png`](../figures/tsne_speaker_embeddings.png)
 - 說明：4 位說話者在 2D 投影平面上的群聚分佈。可清晰觀察到 4 人的聲紋群（藍、橙、綠、紅）彼此間距極大，且有降噪組（右圖）同人的點群更加緊湊內聚。
 
 #### (4) 說話者聲紋中心餘弦相似度熱力圖（Cosine Similarity Matrix）
-- 檔案：[`cosine_similarity_matrix.png`](file:///c:/Users/Lawrence%20Bai/Desktop/Voice%20identify/cosine_similarity_matrix.png)
+- 檔案：[`cosine_similarity_matrix.png`](../figures/cosine_similarity_matrix.png)
 - 說明：展示說話者之間的特徵相似度。對角線同人特徵顯著高達 0.65+，非對角線異人間僅有 ~0.26，具備極佳的聲紋區分度。
 
 ---
@@ -118,6 +118,6 @@ Voice identify/
 
 ## 六、 模型保存清單
 
-- **未降噪模型權重**：[`ecapa_classifier_未降噪_Raw.pth`](file:///c:/Users/Lawrence%20Bai/Desktop/Voice%20identify/ecapa_classifier_%E6%9C%AA%E9%99%8D%E5%99%AA_Raw.pth)
-- **有降噪模型權重**：[`ecapa_classifier_有降噪_Denoised.pth`](file:///c:/Users/Lawrence%20Bai/Desktop/Voice%20identify/ecapa_classifier_%E6%9C%89%E9%99%8D%E5%99%AA_Denoised.pth)
-- **重現實驗腳本**：[`run_ecapa_ablation.py`](file:///c:/Users/Lawrence%20Bai/Desktop/Voice%20identify/run_ecapa_ablation.py)
+- **未降噪模型權重**：[`ecapa_classifier_未降噪_Raw.pth`](../models/ecapa_classifier_未降噪_Raw.pth)
+- **有降噪模型權重**：[`ecapa_classifier_有降噪_Denoised.pth`](../models/ecapa_classifier_有降噪_Denoised.pth)
+- **重現實驗腳本**：[`run_ecapa_ablation.py`](../scripts/run_ecapa_ablation.py)

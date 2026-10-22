@@ -1,0 +1,23 @@
+# ==============================================================================
+# IoT Voice Identification Project - Requirements
+# ==============================================================================
+
+# Deep Learning & Pretrained Speech Backbone
+torch>=2.0.0
+torchaudio>=2.0.0
+speechbrain>=1.0.0
+
+# Audio I/O & Digital Signal Processing
+soundfile>=0.12.1
+sounddevice>=0.4.6
+noisereduce>=3.0.0
+av>=10.0.0
+scipy>=1.10.0
+
+# Machine Learning & Acoustic Embeddings
+scikit-learn>=1.2.0
+numpy>=1.23.0
+
+# Acoustic Plotting & Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
