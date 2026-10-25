@@ -226,7 +226,7 @@ class VoiceIdentifier:
     # -------------------------------------------------------------
     # 終端交互功能 1: 麥克風即時錄音辨識
     # -------------------------------------------------------------
-    def interactive_mic_mode(self, duration_sec=4.5, sr=16000):
+    def interactive_mic_mode(self, duration_sec=4.5, sr=16000, on_result=None):
         print("\n" + "-"*65)
         print("🎙️ 【麥克風即時錄音辨識模式】")
         print("💡 請準備說話（例如朗讀：『故人西辭黃鶴樓』或『紅豆生南國』）")
@@ -235,7 +235,7 @@ class VoiceIdentifier:
             cmd = input("👉 按下 【Enter】 鍵立即開始倒數錄音 (輸入 'q' 退出): ").strip()
             if cmd.lower() == 'q':
                 break
-                
+
             for c in [3, 2, 1]:
                 print(f"⏱️ 倒數計時: {c} 秒...", end="\r", flush=True)
                 time.sleep(0.8)
@@ -268,6 +268,15 @@ class VoiceIdentifier:
             sf.write(clean_path, clean_segment, sr, subtype='PCM_16')
             
             pred_spk, conf, probs = self.predict_segment(clean_segment)
+
+            if on_result is not None:
+                result = on_result({
+                    "speaker": pred_spk,
+                    "confidence": conf,
+                    "probabilities": probs
+                })
+                return result
+
             extra = {
                 "原始錄音備份": os.path.relpath(raw_path, BASE_DIR),
                 "前處理黃金段": os.path.relpath(clean_path, BASE_DIR)
