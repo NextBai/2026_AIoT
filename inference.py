@@ -39,7 +39,11 @@ class ECAPAClassifier(nn.Module):
         return self.fc(x)
 
 class VoiceIdentifier:
-    def __init__(self, classifier_path=DEFAULT_MODEL_PATH, device=None):
+    def __init__(self, classifier_path=None, device=None, use_denoise=True, model_path=None):
+        if classifier_path is None:
+            classifier_path = model_path if model_path is not None else DEFAULT_MODEL_PATH
+        self.use_denoise = use_denoise
+        
         if device is None:
             self.device_str = "cuda:0" if torch.cuda.is_available() else "cpu"
         else:
@@ -224,18 +228,83 @@ class VoiceIdentifier:
         print()
 
     # -------------------------------------------------------------
+    # 程式化 API: 麥克風直接錄音並推論 (適合 IoT / 背景線程)
+    # -------------------------------------------------------------
+    def record_and_predict(self, duration_sec=4.5, sr=16000, apply_denoise=True, save_recording=True):
+        """
+        純程式化非互動麥克風收音與推論 API (適合 IoT 邊緣裝置 / 背景線程直接調用)
+        回傳結構:
+        {
+            "success": bool,
+            "speaker": str or None,
+            "confidence": float,
+            "probabilities": dict,
+            "raw_path": str or None,
+            "processed_path": str or None,
+            "status": str
+        }
+        """
+        n_samples = int(duration_sec * sr)
+        raw_recording = sd.rec(n_samples, samplerate=sr, channels=1, dtype='float32')
+        sd.wait()
+        
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        raw_path = None
+        clean_path = None
+        
+        if save_recording:
+            raw_path = os.path.join(RECORDINGS_DIR, f"rec_{timestamp}_raw.wav")
+            sf.write(raw_path, raw_recording, sr, subtype='PCM_16')
+            
+        clean_segment, status = self.preprocess_signal(raw_recording, sr=sr, apply_denoise=apply_denoise)
+        if clean_segment is None:
+            return {
+                "success": False,
+                "speaker": None,
+                "confidence": 0.0,
+                "probabilities": {spk: 0.0 for spk in self.speakers},
+                "raw_path": raw_path,
+                "processed_path": None,
+                "status": f"failed: {status}"
+            }
+            
+        if save_recording:
+            clean_path = os.path.join(RECORDINGS_DIR, f"rec_{timestamp}_processed.wav")
+            sf.write(clean_path, clean_segment, sr, subtype='PCM_16')
+            
+        pred_spk, conf, probs = self.predict_segment(clean_segment)
+        return {
+            "success": True,
+            "speaker": pred_spk,
+            "confidence": conf,
+            "probabilities": probs,
+            "raw_path": raw_path,
+            "processed_path": clean_path,
+            "status": "success"
+        }
+
+    # -------------------------------------------------------------
     # 終端交互功能 1: 麥克風即時錄音辨識
     # -------------------------------------------------------------
-    def interactive_mic_mode(self, duration_sec=4.5, sr=16000, on_result=None):
+    def interactive_mic_mode(self, duration_sec=4.5, sr=16000, on_result=None, auto_start=False):
+        """
+        終端麥克風錄音模式。
+        - 若 auto_start=True，將跳過 Enter 鍵等待，適合非互動或邊緣腳本。
+        - 若提供 on_result 回呼函式，將在取得結果後返回。
+        """
         print("\n" + "-"*65)
         print("🎙️ 【麥克風即時錄音辨識模式】")
         print("💡 請準備說話（例如朗讀：『故人西辭黃鶴樓』或『紅豆生南國』）")
         
         while True:
-            cmd = input("👉 按下 【Enter】 鍵立即開始倒數錄音 (輸入 'q' 退出): ").strip()
-            if cmd.lower() == 'q':
-                break
-
+            if not auto_start:
+                try:
+                    cmd = input("👉 按下 【Enter】 鍵立即開始倒數錄音 (輸入 'q' 退出): ").strip()
+                    if cmd.lower() == 'q':
+                        break
+                except (EOFError, KeyboardInterrupt):
+                    break
+            
             for c in [3, 2, 1]:
                 print(f"⏱️ 倒數計時: {c} 秒...", end="\r", flush=True)
                 time.sleep(0.8)
@@ -262,6 +331,18 @@ class VoiceIdentifier:
             clean_segment, status = self.preprocess_signal(raw_recording, sr=sr, apply_denoise=True)
             if clean_segment is None:
                 print(f"\n⚠️ 辨識失敗：{status}\n")
+                if on_result is not None:
+                    fail_dict = {
+                        "success": False,
+                        "speaker": None,
+                        "confidence": 0.0,
+                        "probabilities": {spk: 0.0 for spk in self.speakers},
+                        "status": f"failed: {status}"
+                    }
+                    cb_res = on_result(fail_dict)
+                    return cb_res if cb_res is not None else fail_dict
+                if auto_start:
+                    break
                 continue
                 
             clean_path = os.path.join(RECORDINGS_DIR, f"rec_{timestamp}_processed.wav")
@@ -269,19 +350,28 @@ class VoiceIdentifier:
             
             pred_spk, conf, probs = self.predict_segment(clean_segment)
 
+            result_dict = {
+                "success": True,
+                "speaker": pred_spk,
+                "confidence": conf,
+                "probabilities": probs,
+                "raw_path": raw_path,
+                "processed_path": clean_path,
+                "status": "success"
+            }
+
             if on_result is not None:
-                result = on_result({
-                    "speaker": pred_spk,
-                    "confidence": conf,
-                    "probabilities": probs
-                })
-                return result
+                cb_res = on_result(result_dict)
+                return cb_res if cb_res is not None else result_dict
 
             extra = {
                 "原始錄音備份": os.path.relpath(raw_path, BASE_DIR),
                 "前處理黃金段": os.path.relpath(clean_path, BASE_DIR)
             }
             self.print_result_card(pred_spk, conf, probs, extra)
+            
+            if auto_start:
+                return result_dict
 
     # -------------------------------------------------------------
     # 終端交互功能 2: 手動輸入音訊檔案辨識
